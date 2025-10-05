@@ -1,0 +1,135 @@
+/* Color Palette & Theme Variables */
+:root {
+  /* Primary Colors - Purple/Blue Gradient */
+  --primary-main: #667eea;
+  --primary-light: #764ba2;
+  --primary-dark: #5568d3;
+  --primary-contrast: #ffffff;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Secondary Colors - Vibrant Coral/Orange */
+  --secondary-main: #f093fb;
+  --secondary-light: #f5576c;
+  --secondary-dark: #fa709a;
+  --secondary-contrast: #ffffff;
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+
+  /* Accent Colors */
+  --accent-main: #e74c3c;
+  --accent-light: #ec7063;
+  --accent-dark: #c0392b;
+
+  /* Success, Warning, Error, Info */
+  --success-main: #27ae60;
+  --success-light: #52be80;
+  --success-dark: #1e8449;
+
+  --warning-main: #f39c12;
+  --warning-light: #f5b041;
+  --warning-dark: #d68910;
+
+  --error-main: #e74c3c;
+  --error-light: #ec7063;
+  --error-dark: #c0392b;
+
+  --info-main: #3498db;
+  --info-light: #5dade2;
+  --info-dark: #2874a6;
+
+  /* Background Colors */
+  --background-default: #f8f9fd;
+  --background-paper: #ffffff;
+  --background-alt: #f0f2f8;
+  --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --background-mesh: radial-gradient(
+      at 40% 20%,
+      hsla(253, 76%, 69%, 0.3) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 80% 0%, hsla(325, 87%, 75%, 0.3) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(250, 86%, 74%, 0.3) 0px, transparent 50%);
+
+  /* Text Colors */
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --text-disabled: #bdc3c7;
+  --text-hint: #95a5a6;
+
+  /* Border Colors */
+  --border-main: #e0e0e0;
+  --border-light: #f0f0f0;
+  --border-dark: #bdc3c7;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(102, 126, 234, 0.1);
+  --shadow-md: 0 4px 16px rgba(102, 126, 234, 0.15);
+  --shadow-lg: 0 8px 32px rgba(102, 126, 234, 0.2);
+  --shadow-xl: 0 16px 48px rgba(102, 126, 234, 0.25);
+  --shadow-glow: 0 0 30px rgba(102, 126, 234, 0.3);
+
+  /* Glass Morphism */
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-blur: blur(10px);
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-round: 50%;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+  --font-size-4xl: 2.5rem;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-base: 0.3s ease-in-out;
+  --transition-slow: 0.5s ease-in-out;
+
+  /* Z-Index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* Dark mode support */
+[data-theme="dark"] {
+  --primary-main: #34495e;
+  --primary-light: #4a5f7f;
+  --primary-dark: #2c3e50;
+
+  --background-default: #1a1a1a;
+  --background-paper: #2c2c2c;
+  --background-alt: #383838;
+
+  --text-primary: #ecf0f1;
+  --text-secondary: #bdc3c7;
+  --text-disabled: #7f8c8d;
+
+  --border-main: #404040;
+  --border-light: #4a4a4a;
+  --border-dark: #2c2c2c;
+}

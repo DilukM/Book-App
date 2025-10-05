@@ -1,0 +1,22 @@
+@import "./theme.css";
+
+/* Additional CSS Variables and Utilities */
+
+/* Container widths */
+:root {
+  --container-xs: 540px;
+  --container-sm: 720px;
+  --container-md: 960px;
+  --container-lg: 1140px;
+  --container-xl: 1320px;
+}
+
+/* Breakpoints for media queries */
+:root {
+  --breakpoint-xs: 0;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1400px;
+}
