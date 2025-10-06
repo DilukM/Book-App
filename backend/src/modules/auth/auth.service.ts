@@ -1,21 +1,30 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
 import { User } from './user.entity';
 import { SignUpInput, SignInInput, AuthResponse } from './auth.types';
 
 @Injectable()
 export class AuthService {
-  private users = new Map<string, User>();
-
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
 
   async signUp(signUpInput: SignUpInput): Promise<AuthResponse> {
     const { email, password, name } = signUpInput;
 
     // Check if user exists
-    const existingUser = Array.from(this.users.values()).find(u => u.email === email);
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
     if (existingUser) {
       throw new ConflictException('User already exists');
     }
@@ -24,34 +33,36 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user: User = {
-      id: uuidv4(),
+    const user = this.userRepository.create({
       email,
       name,
       password: hashedPassword,
-    };
+    });
 
-    this.users.set(user.id, user);
+    const savedUser = await this.userRepository.save(user);
 
     // Generate token
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: savedUser.id, email: savedUser.email };
     const access_token = this.jwtService.sign(payload);
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = savedUser;
 
     return {
       access_token,
-      user: { ...user, password: undefined }, // Don't return password
+      user: userWithoutPassword as User,
     };
   }
 
   async signIn(signInInput: SignInInput): Promise<AuthResponse> {
     const { email, password } = signInInput;
 
-    const user = Array.from(this.users.values()).find(u => u.email === email);
+    const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password!);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -59,9 +70,12 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email };
     const access_token = this.jwtService.sign(payload);
 
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
+
     return {
       access_token,
-      user: { ...user, password: undefined },
+      user: userWithoutPassword as User,
     };
   }
 

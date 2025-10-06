@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Like } from 'typeorm';
 import { Book } from './book.entity';
 import { CreateBookInput, UpdateBookInput, FileUpload } from './book.types';
 import { v2 as cloudinary } from 'cloudinary';
@@ -10,9 +11,11 @@ import { PaginatedBooksResponse } from './dto/paginated-books.response';
 
 @Injectable()
 export class BookService {
-  private books: Book[] = [];
-
-  constructor(private configService: ConfigService) {
+  constructor(
+    @InjectRepository(Book)
+    private bookRepository: Repository<Book>,
+    private configService: ConfigService,
+  ) {
     // Configure Cloudinary
     cloudinary.config({
       cloud_name: this.configService.get('CLOUDINARY_CLOUD_NAME'),
@@ -25,18 +28,17 @@ export class BookService {
     createBookInput: CreateBookInput,
     image?: FileUpload,
   ): Promise<Book> {
-    const book: Book = {
-      id: uuidv4(),
-      ...createBookInput,
-    };
+    const book = this.bookRepository.create(createBookInput);
 
     if (image) {
-      const imageUrl = await this.uploadToCloudinary(image, book.id);
-      book.imageUrl = imageUrl;
+      // Save first to get the ID
+      const savedBook = await this.bookRepository.save(book);
+      const imageUrl = await this.uploadToCloudinary(image, savedBook.id);
+      savedBook.imageUrl = imageUrl;
+      return this.bookRepository.save(savedBook);
     }
 
-    this.books.push(book);
-    return book;
+    return this.bookRepository.save(book);
   }
 
   private async uploadToCloudinary(
@@ -81,48 +83,41 @@ export class BookService {
     }
   }
 
-  findAll(
+  async findAll(
     paginationInput?: PaginationInput,
     filterInput?: FilterInput,
-  ): PaginatedBooksResponse {
+  ): Promise<PaginatedBooksResponse> {
     const page = paginationInput?.page || 1;
     const limit = paginationInput?.limit || 10;
+    const skip = (page - 1) * limit;
 
-    // Apply filters
-    let filteredBooks = [...this.books];
+    // Build where clause for filters
+    const where: any = {};
 
     if (filterInput) {
       if (filterInput.title) {
-        const titleLower = filterInput.title.toLowerCase();
-        filteredBooks = filteredBooks.filter((book) =>
-          book.title.toLowerCase().includes(titleLower),
-        );
+        where.title = Like(`%${filterInput.title}%`);
       }
-
       if (filterInput.author) {
-        const authorLower = filterInput.author.toLowerCase();
-        filteredBooks = filteredBooks.filter((book) =>
-          book.author.toLowerCase().includes(authorLower),
-        );
+        where.author = Like(`%${filterInput.author}%`);
       }
-
       if (filterInput.genre) {
-        const genreLower = filterInput.genre.toLowerCase();
-        filteredBooks = filteredBooks.filter((book) =>
-          book.genre.toLowerCase().includes(genreLower),
-        );
+        where.genre = Like(`%${filterInput.genre}%`);
       }
     }
 
-    const total = filteredBooks.length;
-    const totalPages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
+    // Get books with pagination
+    const [books, total] = await this.bookRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
 
-    // Apply pagination
-    const paginatedBooks = filteredBooks.slice(skip, skip + limit);
+    const totalPages = Math.ceil(total / limit);
 
     return {
-      books: paginatedBooks,
+      books,
       total,
       page,
       limit,
@@ -132,8 +127,8 @@ export class BookService {
     };
   }
 
-  findOne(id: string): Book {
-    const book = this.books.find((b) => b.id === id);
+  async findOne(id: string): Promise<Book> {
+    const book = await this.bookRepository.findOne({ where: { id } });
     if (!book) {
       throw new NotFoundException(`Book with ID ${id} not found`);
     }
@@ -145,50 +140,40 @@ export class BookService {
     updateBookInput: UpdateBookInput,
     image?: FileUpload,
   ): Promise<Book> {
-    const bookIndex = this.books.findIndex((b) => b.id === id);
-    if (bookIndex === -1) {
-      throw new NotFoundException(`Book with ID ${id} not found`);
-    }
-
-    const updatedBook = { ...this.books[bookIndex], ...updateBookInput };
+    const book = await this.findOne(id);
 
     if (image) {
       // Delete old image from Cloudinary if exists
-      if (updatedBook.imageUrl) {
-        await this.deleteFromCloudinary(updatedBook.imageUrl);
+      if (book.imageUrl) {
+        await this.deleteFromCloudinary(book.imageUrl);
       }
 
       const imageUrl = await this.uploadToCloudinary(image, id);
-      updatedBook.imageUrl = imageUrl;
+      book.imageUrl = imageUrl;
     }
 
-    this.books[bookIndex] = updatedBook;
-    return updatedBook;
+    Object.assign(book, updateBookInput);
+    return this.bookRepository.save(book);
   }
 
   async remove(id: string): Promise<void> {
-    const bookIndex = this.books.findIndex((b) => b.id === id);
-    if (bookIndex === -1) {
-      throw new NotFoundException(`Book with ID ${id} not found`);
-    }
-
-    const book = this.books[bookIndex];
+    const book = await this.findOne(id);
 
     // Delete image from Cloudinary if exists
     if (book.imageUrl) {
       await this.deleteFromCloudinary(book.imageUrl);
     }
 
-    this.books.splice(bookIndex, 1);
+    await this.bookRepository.remove(book);
   }
 
-  search(query: string): Book[] {
-    const lowerQuery = query.toLowerCase();
-    return this.books.filter(
-      (book) =>
-        book.title.toLowerCase().includes(lowerQuery) ||
-        book.author.toLowerCase().includes(lowerQuery) ||
-        book.genre.toLowerCase().includes(lowerQuery),
-    );
+  async search(query: string): Promise<Book[]> {
+    const lowerQuery = `%${query}%`;
+    return this.bookRepository
+      .createQueryBuilder('book')
+      .where('LOWER(book.title) LIKE LOWER(:query)', { query: lowerQuery })
+      .orWhere('LOWER(book.author) LIKE LOWER(:query)', { query: lowerQuery })
+      .orWhere('LOWER(book.genre) LIKE LOWER(:query)', { query: lowerQuery })
+      .getMany();
   }
 }

@@ -102,17 +102,6 @@ export default function LoginPage() {
             Register here
           </Link>
         </p>
-
-        <div className={styles.demo}>
-          <p className={styles.demoTitle}>Demo Credentials:</p>
-          <p className={styles.demoText}>
-            Email: <strong>admin@example.com</strong> | Password:{" "}
-            <strong>admin123</strong>
-          </p>
-          <p className={styles.demoText}>
-            Email: <strong>user@example.com</strong> | Password: <strong>user123</strong>
-          </p>
-        </div>
       </div>
     </div>
   );
