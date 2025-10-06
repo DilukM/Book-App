@@ -5,5 +5,8 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^graphql-upload/GraphQLUpload.mjs$": "<rootDir>/__mocks__/graphql-upload/GraphQLUpload.mjs"
   }
 }

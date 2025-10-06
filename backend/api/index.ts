@@ -10,7 +10,7 @@ let nestApp: any;
 
 const createNestApp = async () => {
   if (!isAppInitialized) {
-    // Add graphql-upload middleware
+    // graphql-upload middleware
     expressApp.use(
       graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }),
     );
