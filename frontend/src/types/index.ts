@@ -7,6 +7,7 @@ export interface Book {
   genre: string;
   description?: string;
   isbn?: string;
+  imageUrl?: string;
 }
 
 export interface BookFormData {
@@ -16,6 +17,7 @@ export interface BookFormData {
   genre: string;
   description?: string;
   isbn?: string;
+  image?: File | null;
 }
 
 // User Types

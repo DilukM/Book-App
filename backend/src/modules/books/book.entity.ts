@@ -22,4 +22,7 @@ export class Book {
 
   @Field({ nullable: true })
   isbn?: string;
+
+  @Field({ nullable: true })
+  imageUrl?: string; // URL path to the image file
 }

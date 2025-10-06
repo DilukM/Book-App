@@ -14,9 +14,10 @@ import { BookModule } from './modules/books/book.module';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true, 
+      autoSchemaFile: true,
       playground: true,
       introspection: true,
+      csrfPrevention: false,
     }),
     AuthModule,
     BookModule,

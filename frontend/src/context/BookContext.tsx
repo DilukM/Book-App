@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, ReactNode } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import {
   Book,
@@ -14,18 +8,11 @@ import {
   PaginatedResponse,
   BookFilters,
   GetBooksResponse,
-  GetBookResponse,
   CreateBookResponse,
   UpdateBookResponse,
   DeleteBookResponse,
 } from "@/types";
-import {
-  GET_BOOKS,
-  GET_BOOK,
-  CREATE_BOOK,
-  UPDATE_BOOK,
-  DELETE_BOOK,
-} from "@/lib/books";
+import { GET_BOOKS, CREATE_BOOK, UPDATE_BOOK, DELETE_BOOK } from "@/lib/books";
 
 interface BookContextType {
   books: Book[];
@@ -109,6 +96,14 @@ export function BookProvider({ children }: { children: ReactNode }) {
     bookData: BookFormData
   ): Promise<{ success: boolean; message?: string; book?: Book }> => {
     try {
+      // Debug: Log what we're sending
+      console.log("BookContext - Received bookData:", bookData);
+      console.log("BookContext - Image to upload:", bookData.image);
+      console.log(
+        "BookContext - Image is File?",
+        bookData.image instanceof File
+      );
+
       const { data } = await createBookMutation({
         variables: {
           input: {
@@ -119,6 +114,7 @@ export function BookProvider({ children }: { children: ReactNode }) {
             description: bookData.description || undefined,
             isbn: bookData.isbn || undefined,
           },
+          image: bookData.image || null,
         },
       });
 
@@ -154,6 +150,7 @@ export function BookProvider({ children }: { children: ReactNode }) {
             description: bookData.description || undefined,
             isbn: bookData.isbn || undefined,
           },
+          image: bookData.image || null,
         },
       });
 

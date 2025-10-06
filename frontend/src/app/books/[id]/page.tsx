@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { useBooks } from '@/context/BookContext';
-import Loading from '@/components/Loading/Loading';
-import styles from './book-detail.module.css';
+import React, { useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useBooks } from "@/context/BookContext";
+import Loading from "@/components/Loading/Loading";
+import styles from "./book-detail.module.css";
 
 export default function BookDetailPage() {
   const router = useRouter();
   const params = useParams();
   const bookId = params.id as string;
-  
+
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { getBookById, deleteBook } = useBooks();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [isAuthenticated, authLoading, router]);
 
@@ -38,7 +38,8 @@ export default function BookDetailPage() {
         <div className={styles.error}>
           <h1 className={styles.errorTitle}>📚 Book Not Found</h1>
           <p className={styles.errorText}>
-            The book you&apos;re looking for doesn&apos;t exist or has been removed.
+            The book you&apos;re looking for doesn&apos;t exist or has been
+            removed.
           </p>
         </div>
       </div>
@@ -49,7 +50,7 @@ export default function BookDetailPage() {
     if (confirm(`Are you sure you want to delete "${book.title}"?`)) {
       const result = await deleteBook(bookId);
       if (result.success) {
-        router.push('/books');
+        router.push("/books");
       }
     }
   };
@@ -57,6 +58,15 @@ export default function BookDetailPage() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
+        {book.imageUrl && (
+          <div className={styles.imageSection}>
+            <img
+              src={book.imageUrl}
+              alt={book.title}
+              className={styles.bookImage}
+            />
+          </div>
+        )}
         <div className={styles.header}>
           <h1 className={styles.title}>{book.title}</h1>
           <p className={styles.author}>by {book.author}</p>

@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_BOOKS = gql`
   query GetBooks {
@@ -10,6 +10,7 @@ export const GET_BOOKS = gql`
       genre
       description
       isbn
+      imageUrl
     }
   }
 `;
@@ -24,13 +25,14 @@ export const GET_BOOK = gql`
       genre
       description
       isbn
+      imageUrl
     }
   }
 `;
 
 export const CREATE_BOOK = gql`
-  mutation CreateBook($input: CreateBookInput!) {
-    createBook(input: $input) {
+  mutation CreateBook($input: CreateBookInput!, $image: Upload) {
+    createBook(input: $input, image: $image) {
       id
       title
       author
@@ -38,13 +40,14 @@ export const CREATE_BOOK = gql`
       genre
       description
       isbn
+      imageUrl
     }
   }
 `;
 
 export const UPDATE_BOOK = gql`
-  mutation UpdateBook($id: String!, $input: UpdateBookInput!) {
-    updateBook(id: $id, input: $input) {
+  mutation UpdateBook($id: String!, $input: UpdateBookInput!, $image: Upload) {
+    updateBook(id: $id, input: $input, image: $image) {
       id
       title
       author
@@ -52,6 +55,7 @@ export const UPDATE_BOOK = gql`
       genre
       description
       isbn
+      imageUrl
     }
   }
 `;

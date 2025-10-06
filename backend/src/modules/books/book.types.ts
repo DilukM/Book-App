@@ -1,6 +1,13 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { Book } from './book.entity';
 
+export interface FileUpload {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  createReadStream: () => NodeJS.ReadableStream;
+}
+
 @InputType()
 export class CreateBookInput {
   @Field()

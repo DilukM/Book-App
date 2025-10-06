@@ -1,8 +1,8 @@
 "use client";
 
 import "./globals.css";
-import { ApolloProvider } from '@apollo/client/react';
-import { client } from '@/lib/apollo';
+import { ApolloProvider } from "@apollo/client/react";
+import { client } from "@/lib/apollo";
 import { AuthProvider } from "@/context/AuthContext";
 import { BookProvider } from "@/context/BookContext";
 import Header from "@/components/Header/Header";
@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <ApolloProvider client={client}>
           <AuthProvider>
             <BookProvider>

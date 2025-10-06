@@ -19,7 +19,9 @@ export default function AddBookPage() {
     genre: "",
     description: "",
     isbn: "",
+    image: null,
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,6 +51,44 @@ export default function AddBookPage() {
     setError("");
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Image size should be less than 10MB");
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setError("Please select a valid image file");
+        return;
+      }
+
+      setFormData({
+        ...formData,
+        image: file,
+      });
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      setError("");
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({
+      ...formData,
+      image: null,
+    });
+    setImagePreview(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -72,6 +112,10 @@ export default function AddBookPage() {
       setIsSubmitting(false);
       return;
     }
+
+    // Debug: Log the formData to verify image is included
+    console.log("Form data being submitted:", formData);
+    console.log("Image file:", formData.image);
 
     const result = await addBook(formData);
     setIsSubmitting(false);
@@ -207,6 +251,41 @@ export default function AddBookPage() {
               rows={4}
               disabled={isSubmitting}
             />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="image" className={styles.label}>
+              Book Cover Image (Optional)
+            </label>
+            <input
+              type="file"
+              id="image"
+              name="image"
+              accept="image/*"
+              onChange={handleImageChange}
+              className={styles.fileInput}
+              disabled={isSubmitting}
+            />
+            <p className={styles.helperText}>
+              Maximum file size: 10MB. Supported formats: JPG, PNG, GIF, WebP
+            </p>
+            {imagePreview && (
+              <div className={styles.imagePreview}>
+                <img
+                  src={imagePreview}
+                  alt="Book cover preview"
+                  className={styles.previewImage}
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className={styles.removeImageButton}
+                  disabled={isSubmitting}
+                >
+                  Remove Image
+                </button>
+              </div>
+            )}
           </div>
 
           <div className={styles.actions}>

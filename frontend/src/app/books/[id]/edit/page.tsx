@@ -23,7 +23,10 @@ export default function EditBookPage() {
     genre: "",
     description: "",
     isbn: "",
+    image: null,
   });
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookLoaded, setBookLoaded] = useState(false);
@@ -44,7 +47,9 @@ export default function EditBookPage() {
           genre: book.genre,
           description: book.description || "",
           isbn: book.isbn || "",
+          image: null,
         });
+        setCurrentImageUrl(book.imageUrl || null);
         setBookLoaded(true);
       } else {
         router.push("/books");
@@ -70,6 +75,45 @@ export default function EditBookPage() {
       [e.target.name]: e.target.value,
     });
     setError("");
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Image size should be less than 10MB");
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setError("Please select a valid image file");
+        return;
+      }
+
+      setFormData({
+        ...formData,
+        image: file,
+      });
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      setError("");
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({
+      ...formData,
+      image: null,
+    });
+    setImagePreview(null);
+    setCurrentImageUrl(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -230,6 +274,64 @@ export default function EditBookPage() {
               rows={4}
               disabled={isSubmitting}
             />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="image" className={styles.label}>
+              Book Cover Image (Optional)
+            </label>
+            {currentImageUrl && !imagePreview && (
+              <div className={styles.currentImage}>
+                <p className={styles.helperText}>Current Image:</p>
+                <img
+                  src={currentImageUrl}
+                  alt="Current book cover"
+                  className={styles.previewImage}
+                />
+              </div>
+            )}
+            <input
+              type="file"
+              id="image"
+              name="image"
+              accept="image/*"
+              onChange={handleImageChange}
+              className={styles.fileInput}
+              disabled={isSubmitting}
+            />
+            <p className={styles.helperText}>
+              {currentImageUrl
+                ? "Upload a new image to replace the current one"
+                : "Maximum file size: 10MB. Supported formats: JPG, PNG, GIF, WebP"}
+            </p>
+            {imagePreview && (
+              <div className={styles.imagePreview}>
+                <p className={styles.helperText}>New Image:</p>
+                <img
+                  src={imagePreview}
+                  alt="Book cover preview"
+                  className={styles.previewImage}
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className={styles.removeImageButton}
+                  disabled={isSubmitting}
+                >
+                  Remove New Image
+                </button>
+              </div>
+            )}
+            {currentImageUrl && !imagePreview && (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className={styles.removeImageButton}
+                disabled={isSubmitting}
+              >
+                Remove Current Image
+              </button>
+            )}
           </div>
 
           <div className={styles.actions}>

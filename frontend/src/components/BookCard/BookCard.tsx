@@ -23,6 +23,15 @@ export default function BookCard({ book, onDelete }: BookCardProps) {
 
   return (
     <div className={styles.card}>
+      {book.imageUrl && (
+        <div className={styles.imageContainer}>
+          <img
+            src={book.imageUrl}
+            alt={book.title}
+            className={styles.bookImage}
+          />
+        </div>
+      )}
       <div className={styles.header}>
         <h3 className={styles.title}>{book.title}</h3>
         <span className={styles.year}>{book.publishedYear}</span>
