@@ -49,9 +49,25 @@ export interface RegisterData {
 }
 
 // Pagination Types
-export interface PaginationParams {
+export interface PaginationInput {
+  page?: number;
+  limit?: number;
+}
+
+export interface FilterInput {
+  title?: string;
+  author?: string;
+  genre?: string;
+}
+
+export interface PaginatedBooksResponse {
+  books: Book[];
+  total: number;
   page: number;
   limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -66,6 +82,7 @@ export interface BookFilters {
   search?: string;
   genre?: string;
   author?: string;
+  title?: string;
 }
 
 // Auth GraphQL Types
@@ -99,7 +116,7 @@ export interface LogoutResponse {
 
 // Book GraphQL Types
 export interface GetBooksResponse {
-  books: Book[];
+  books: PaginatedBooksResponse;
 }
 
 export interface GetBookResponse {

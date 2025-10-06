@@ -8,7 +8,10 @@ import styles from "./page.module.css";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
-  const { books } = useBooks();
+  const { booksData } = useBooks();
+
+  // Get books array from paginated response
+  const books = booksData?.books || [];
 
   return (
     <div className={styles.container}>

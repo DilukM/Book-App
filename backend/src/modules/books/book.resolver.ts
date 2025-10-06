@@ -9,14 +9,20 @@ import {
 } from './book.types';
 import type { FileUpload } from './book.types';
 import GraphQLUpload from 'graphql-upload/GraphQLUpload.mjs';
+import { PaginationInput } from './dto/pagination.input';
+import { FilterInput } from './dto/filter.input';
+import { PaginatedBooksResponse } from './dto/paginated-books.response';
 
 @Resolver(() => Book)
 export class BookResolver {
   constructor(private bookService: BookService) {}
 
-  @Query(() => [Book])
-  async books(): Promise<Book[]> {
-    return this.bookService.findAll();
+  @Query(() => PaginatedBooksResponse)
+  async books(
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput,
+    @Args('filter', { nullable: true }) filter?: FilterInput,
+  ): Promise<PaginatedBooksResponse> {
+    return this.bookService.findAll(pagination, filter);
   }
 
   @Query(() => Book)

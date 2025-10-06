@@ -1,27 +1,30 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+} from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import {
   Book,
   BookFormData,
-  PaginatedResponse,
-  BookFilters,
+  PaginatedBooksResponse,
   GetBooksResponse,
   CreateBookResponse,
   UpdateBookResponse,
   DeleteBookResponse,
+  PaginationInput,
+  FilterInput,
 } from "@/types";
 import { GET_BOOKS, CREATE_BOOK, UPDATE_BOOK, DELETE_BOOK } from "@/lib/books";
 
 interface BookContextType {
-  books: Book[];
+  booksData: PaginatedBooksResponse | null;
   isLoading: boolean;
-  getBooks: (
-    page?: number,
-    limit?: number,
-    filters?: BookFilters
-  ) => PaginatedResponse<Book>;
+  error: Error | undefined;
+  fetchBooks: (pagination?: PaginationInput, filter?: FilterInput) => void;
   getBookById: (id: string) => Book | undefined;
   addBook: (
     book: BookFormData
@@ -31,66 +34,42 @@ interface BookContextType {
     book: BookFormData
   ) => Promise<{ success: boolean; message?: string }>;
   deleteBook: (id: string) => Promise<{ success: boolean; message?: string }>;
-  searchBooks: (query: string) => Book[];
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
 
 export function BookProvider({ children }: { children: ReactNode }) {
-  const { data, loading, refetch } = useQuery<GetBooksResponse>(GET_BOOKS);
-  const books = data?.books || [];
+  const { data, loading, error, refetch } = useQuery<GetBooksResponse>(
+    GET_BOOKS,
+    {
+      variables: {
+        pagination: { page: 1, limit: 10 },
+      },
+    }
+  );
+
+  const booksData = data?.books || null;
 
   const [createBookMutation] = useMutation<CreateBookResponse>(CREATE_BOOK);
   const [updateBookMutation] = useMutation<UpdateBookResponse>(UPDATE_BOOK);
   const [deleteBookMutation] = useMutation<DeleteBookResponse>(DELETE_BOOK);
 
-  const getBooks = (
-    page: number = 1,
-    limit: number = 10,
-    filters?: BookFilters
-  ): PaginatedResponse<Book> => {
-    let filteredBooks = [...books];
+  const fetchBooks = useCallback(
+    (pagination?: PaginationInput, filter?: FilterInput) => {
+      refetch({
+        pagination: pagination || { page: 1, limit: 10 },
+        filter: filter || {},
+      });
+    },
+    [refetch]
+  );
 
-    // Apply filters
-    if (filters) {
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filteredBooks = filteredBooks.filter(
-          (book) =>
-            book.title.toLowerCase().includes(searchLower) ||
-            book.author.toLowerCase().includes(searchLower) ||
-            book.genre.toLowerCase().includes(searchLower)
-        );
-      }
-      if (filters.genre) {
-        filteredBooks = filteredBooks.filter(
-          (book) => book.genre === filters.genre
-        );
-      }
-      if (filters.author) {
-        filteredBooks = filteredBooks.filter((book) =>
-          book.author.toLowerCase().includes(filters.author!.toLowerCase())
-        );
-      }
-    }
-
-    const total = filteredBooks.length;
-    const totalPages = Math.ceil(total / limit);
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedBooks = filteredBooks.slice(start, end);
-
-    return {
-      data: paginatedBooks,
-      total,
-      page,
-      totalPages,
-    };
-  };
-
-  const getBookById = (id: string): Book | undefined => {
-    return books.find((book) => book.id === id);
-  };
+  const getBookById = useCallback(
+    (id: string): Book | undefined => {
+      return booksData?.books.find((book) => book.id === id);
+    },
+    [booksData]
+  );
 
   const addBook = async (
     bookData: BookFormData
@@ -186,27 +165,15 @@ export function BookProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const searchBooks = (query: string): Book[] => {
-    if (!query) return books;
-
-    const searchLower = query.toLowerCase();
-    return books.filter(
-      (book) =>
-        book.title.toLowerCase().includes(searchLower) ||
-        book.author.toLowerCase().includes(searchLower) ||
-        book.genre.toLowerCase().includes(searchLower)
-    );
-  };
-
   const value: BookContextType = {
-    books,
+    booksData,
     isLoading: loading,
-    getBooks,
+    error,
+    fetchBooks,
     getBookById,
     addBook,
     updateBook,
     deleteBook,
-    searchBooks,
   };
 
   return <BookContext.Provider value={value}>{children}</BookContext.Provider>;

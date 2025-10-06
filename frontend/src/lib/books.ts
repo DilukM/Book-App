@@ -1,16 +1,24 @@
 import { gql } from "@apollo/client";
 
 export const GET_BOOKS = gql`
-  query GetBooks {
-    books {
-      id
-      title
-      author
-      publishedYear
-      genre
-      description
-      isbn
-      imageUrl
+  query GetBooks($pagination: PaginationInput, $filter: FilterInput) {
+    books(pagination: $pagination, filter: $filter) {
+      books {
+        id
+        title
+        author
+        publishedYear
+        genre
+        description
+        isbn
+        imageUrl
+      }
+      total
+      page
+      limit
+      totalPages
+      hasNextPage
+      hasPreviousPage
     }
   }
 `;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useBooks } from "@/context/BookContext";
@@ -13,12 +13,119 @@ import styles from "./books.module.css";
 export default function BooksPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { getBooks, deleteBook, isLoading: booksLoading } = useBooks();
+  const {
+    booksData,
+    fetchBooks,
+    deleteBook,
+    isLoading: booksLoading,
+  } = useBooks();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
+  const [authorQuery, setAuthorQuery] = useState("");
+
+  // Applied filters - these are set when user clicks search button
+  const [appliedTitle, setAppliedTitle] = useState("");
+  const [appliedAuthor, setAppliedAuthor] = useState("");
+  const [appliedGenre, setAppliedGenre] = useState("");
+
   const itemsPerPage = 6;
+
+  const genres = [
+    "Fiction",
+    "Science Fiction",
+    "Fantasy",
+    "Mystery",
+    "Romance",
+  ];
+
+  // Initial load - fetch all books
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    fetchBooks({ page: 1, limit: itemsPerPage }, undefined);
+  }, [isAuthenticated, fetchBooks]);
+
+  // Fetch books when applied filters or page changes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const filter: { title?: string; author?: string; genre?: string } = {};
+
+    if (appliedTitle) filter.title = appliedTitle;
+    if (appliedAuthor) filter.author = appliedAuthor;
+    if (appliedGenre) filter.genre = appliedGenre;
+
+    fetchBooks(
+      { page: currentPage, limit: itemsPerPage },
+      Object.keys(filter).length > 0 ? filter : undefined
+    );
+  }, [
+    currentPage,
+    appliedTitle,
+    appliedAuthor,
+    appliedGenre,
+    fetchBooks,
+    isAuthenticated,
+  ]);
+
+  const handleSearch = useCallback(() => {
+    // Apply the current filter values and reset to page 1
+    setAppliedTitle(searchQuery);
+    setAppliedAuthor(authorQuery);
+    setAppliedGenre(selectedGenre);
+    setCurrentPage(1);
+  }, [searchQuery, authorQuery, selectedGenre]);
+
+  const handleClearFilters = useCallback(() => {
+    // Clear all filter inputs and applied filters
+    setSearchQuery("");
+    setAuthorQuery("");
+    setSelectedGenre("");
+    setAppliedTitle("");
+    setAppliedAuthor("");
+    setAppliedGenre("");
+    setCurrentPage(1);
+  }, []);
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const result = await deleteBook(id);
+      if (result.success) {
+        // Refresh current page
+        if (
+          booksData &&
+          booksData.books &&
+          booksData.books.length === 1 &&
+          currentPage > 1
+        ) {
+          setCurrentPage(currentPage - 1);
+        } else {
+          // Refetch current page
+          const filter: { title?: string; author?: string; genre?: string } =
+            {};
+          if (appliedTitle) filter.title = appliedTitle;
+          if (appliedAuthor) filter.author = appliedAuthor;
+          if (appliedGenre) filter.genre = appliedGenre;
+
+          fetchBooks(
+            { page: currentPage, limit: itemsPerPage },
+            Object.keys(filter).length > 0 ? filter : undefined
+          );
+        }
+      }
+    },
+    [
+      deleteBook,
+      booksData,
+      currentPage,
+      appliedTitle,
+      appliedAuthor,
+      appliedGenre,
+      fetchBooks,
+    ]
+  );
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -34,39 +141,6 @@ export default function BooksPage() {
     return null;
   }
 
-  const paginatedData = getBooks(currentPage, itemsPerPage, {
-    search: searchQuery,
-    genre: selectedGenre,
-  });
-
-  const genres = [
-    "Fiction",
-    "Science Fiction",
-    "Fantasy",
-    "Mystery",
-    "Romance",
-  ];
-
-  const handleDelete = async (id: string) => {
-    const result = await deleteBook(id);
-    if (result.success) {
-      // Refresh current page
-      if (paginatedData.data.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-    }
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
-
-  const handleGenreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedGenre(e.target.value);
-    setCurrentPage(1);
-  };
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -79,8 +153,14 @@ export default function BooksPage() {
       <div className={styles.filters}>
         <SearchBar
           value={searchQuery}
-          onChange={handleSearch}
-          placeholder="Search by title, author, or genre..."
+          onChange={setSearchQuery}
+          placeholder="Search by title..."
+        />
+
+        <SearchBar
+          value={authorQuery}
+          onChange={setAuthorQuery}
+          placeholder="Search by author..."
         />
 
         <div className={styles.genreFilter}>
@@ -90,7 +170,7 @@ export default function BooksPage() {
           <select
             id="genre"
             value={selectedGenre}
-            onChange={handleGenreChange}
+            onChange={(e) => setSelectedGenre(e.target.value)}
             className={styles.select}
           >
             <option value="">All Genres</option>
@@ -101,14 +181,30 @@ export default function BooksPage() {
             ))}
           </select>
         </div>
+
+        <button
+          onClick={handleSearch}
+          className={styles.searchButton}
+          type="button"
+        >
+          Search
+        </button>
+
+        <button
+          onClick={handleClearFilters}
+          className={styles.clearButton}
+          type="button"
+        >
+          Clear
+        </button>
       </div>
 
-      {paginatedData.data.length === 0 ? (
+      {!booksData || !booksData.books || booksData.books.length === 0 ? (
         <div className={styles.empty}>
           <div className={styles.emptyIcon}>📚</div>
           <h2 className={styles.emptyTitle}>No books found</h2>
           <p className={styles.emptyText}>
-            {searchQuery || selectedGenre
+            {searchQuery || selectedGenre || authorQuery
               ? "Try adjusting your search filters"
               : "Start by adding your first book to the collection"}
           </p>
@@ -117,19 +213,21 @@ export default function BooksPage() {
         <>
           <div className={styles.results}>
             <p className={styles.resultsText}>
-              Showing {paginatedData.data.length} of {paginatedData.total} books
+              Showing {booksData.books.length} of {booksData.total} books
+              {booksData.total > 0 &&
+                ` (Page ${booksData.page} of ${booksData.totalPages})`}
             </p>
           </div>
 
           <div className={styles.grid}>
-            {paginatedData.data.map((book) => (
+            {booksData.books.map((book) => (
               <BookCard key={book.id} book={book} onDelete={handleDelete} />
             ))}
           </div>
 
           <Pagination
             currentPage={currentPage}
-            totalPages={paginatedData.totalPages}
+            totalPages={booksData.totalPages}
             onPageChange={setCurrentPage}
           />
         </>

@@ -4,6 +4,9 @@ import { Book } from './book.entity';
 import { CreateBookInput, UpdateBookInput, FileUpload } from './book.types';
 import { v2 as cloudinary } from 'cloudinary';
 import { ConfigService } from '@nestjs/config';
+import { PaginationInput } from './dto/pagination.input';
+import { FilterInput } from './dto/filter.input';
+import { PaginatedBooksResponse } from './dto/paginated-books.response';
 
 @Injectable()
 export class BookService {
@@ -78,8 +81,55 @@ export class BookService {
     }
   }
 
-  findAll(): Book[] {
-    return this.books;
+  findAll(
+    paginationInput?: PaginationInput,
+    filterInput?: FilterInput,
+  ): PaginatedBooksResponse {
+    const page = paginationInput?.page || 1;
+    const limit = paginationInput?.limit || 10;
+
+    // Apply filters
+    let filteredBooks = [...this.books];
+
+    if (filterInput) {
+      if (filterInput.title) {
+        const titleLower = filterInput.title.toLowerCase();
+        filteredBooks = filteredBooks.filter((book) =>
+          book.title.toLowerCase().includes(titleLower),
+        );
+      }
+
+      if (filterInput.author) {
+        const authorLower = filterInput.author.toLowerCase();
+        filteredBooks = filteredBooks.filter((book) =>
+          book.author.toLowerCase().includes(authorLower),
+        );
+      }
+
+      if (filterInput.genre) {
+        const genreLower = filterInput.genre.toLowerCase();
+        filteredBooks = filteredBooks.filter((book) =>
+          book.genre.toLowerCase().includes(genreLower),
+        );
+      }
+    }
+
+    const total = filteredBooks.length;
+    const totalPages = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+
+    // Apply pagination
+    const paginatedBooks = filteredBooks.slice(skip, skip + limit);
+
+    return {
+      books: paginatedBooks,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
   }
 
   findOne(id: string): Book {
