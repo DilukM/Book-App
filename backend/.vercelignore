@@ -1,0 +1,24 @@
+# Test files
+*.spec.ts
+test/
+coverage/
+
+# Development files
+.env.local
+.env.development
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts (let Vercel build)
+node_modules/
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
