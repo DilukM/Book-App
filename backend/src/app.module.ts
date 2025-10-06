@@ -7,8 +7,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { BookModule } from './modules/books/book.module';
-import { Book } from './modules/books/book.entity';
-import { User } from './modules/auth/user.entity';
 
 @Module({
   imports: [
@@ -20,7 +18,7 @@ import { User } from './modules/auth/user.entity';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
-        entities: [Book, User], // Explicit entity imports for Vercel
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // Set to false in production, use migrations instead
         ssl: {
           rejectUnauthorized: false, // Required for Neon/most cloud PostgreSQL providers
