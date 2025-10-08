@@ -19,9 +19,9 @@ import { BookModule } from './modules/books/book.module';
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // Set to false in production, use migrations instead
+        synchronize: true, 
         ssl: {
-          rejectUnauthorized: false, // Required for Neon/most cloud PostgreSQL providers
+          rejectUnauthorized: false, 
         },
         logging: process.env.NODE_ENV !== 'production',
       }),
