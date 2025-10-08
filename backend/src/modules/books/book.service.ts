@@ -70,8 +70,6 @@ export class BookService {
 
   private async deleteFromCloudinary(imageUrl: string): Promise<void> {
     try {
-      // Extract public_id from Cloudinary URL
-      // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/{version}/{public_id}.{format}
       const urlParts = imageUrl.split('/');
       const fileWithExtension = urlParts[urlParts.length - 1];
       const publicId = `books/${fileWithExtension.split('.')[0]}`;
@@ -79,7 +77,6 @@ export class BookService {
       await cloudinary.uploader.destroy(publicId);
     } catch (error) {
       console.error('Error deleting image from Cloudinary:', error);
-      // Don't throw error, just log it
     }
   }
 
@@ -91,28 +88,35 @@ export class BookService {
     const limit = paginationInput?.limit || 10;
     const skip = (page - 1) * limit;
 
-    // Build where clause for filters
-    const where: any = {};
+    // Use query builder for case-insensitive search
+    const queryBuilder = this.bookRepository
+      .createQueryBuilder('book')
+      .orderBy('book.createdAt', 'DESC');
 
+    // Apply filters with case-insensitive LIKE
     if (filterInput) {
       if (filterInput.title) {
-        where.title = Like(`%${filterInput.title}%`);
+        queryBuilder.andWhere('LOWER(book.title) LIKE LOWER(:title)', {
+          title: `%${filterInput.title}%`,
+        });
       }
       if (filterInput.author) {
-        where.author = Like(`%${filterInput.author}%`);
+        queryBuilder.andWhere('LOWER(book.author) LIKE LOWER(:author)', {
+          author: `%${filterInput.author}%`,
+        });
       }
       if (filterInput.genre) {
-        where.genre = Like(`%${filterInput.genre}%`);
+        queryBuilder.andWhere('LOWER(book.genre) LIKE LOWER(:genre)', {
+          genre: `%${filterInput.genre}%`,
+        });
       }
     }
 
     // Get books with pagination
-    const [books, total] = await this.bookRepository.findAndCount({
-      where,
-      skip,
-      take: limit,
-      order: { createdAt: 'DESC' },
-    });
+    const [books, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
     const totalPages = Math.ceil(total / limit);
 
